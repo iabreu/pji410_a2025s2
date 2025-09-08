@@ -15,13 +15,12 @@ Aplicação de técnicas de análise de dados e aprendizagem de máquina sobre u
 
 - `data/` — datasets (não adicione dados sensíveis ao repositório público).
 - `src/` — módulos Python: pré-processamento, treino, inferência, utilitários.
-- `models/` — artefatos treinados (pickle/joblib).
 
 
 ## Tecnologias e dependências
 
 - Python 3.11+ (usar virtualenv ou venv).
-- Bibliotecas principais: pandas, numpy, scikit-learn, matplotlib/seaborn, jupyter, joblib.
+- Bibliotecas principais: pandas, numpy, scikit-learn, matplotlib, jupyter.
 
 Exemplo mínimo de `requirements.txt`:
 
@@ -30,9 +29,7 @@ pandas
 numpy
 scikit-learn
 matplotlib
-seaborn
 jupyterlab
-joblib
 ```
 
 ## Como começar (local)
