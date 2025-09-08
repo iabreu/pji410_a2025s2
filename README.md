@@ -2,7 +2,7 @@
 
 
 ## Resumo
-Aplicação de técnicas de análise de dados e aprendizagem de máquina sobre usando datasets, com objetivo de identificar padrões e gerar visualizações que apoiem decisões.
+Aplicação de técnicas de análise de dados e aprendizagem de máquina sobre datasets, com objetivo de identificar padrões e gerar visualizações que apoiem decisões.
 
 
 ## Objetivos
