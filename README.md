@@ -11,13 +11,13 @@ Aplicação de técnicas de análise de dados e aprendizagem de máquina sobre d
 - Explorar padrões e gerar visualizações.
 - Treinar modelos de machine learning (por ex.:  clustering).
 
-## Estrutura sugerida do repositório
+## Estrutura do repositório
 
 - `data/` — datasets (não adicione dados sensíveis ao repositório público).
 - `src/` — módulos Python: pré-processamento, treino, inferência, utilitários.
 
 
-## Tecnologias e dependências
+## Dependências
 
 - Python 3.11+ (usar virtualenv ou venv).
 - Bibliotecas principais: pandas, numpy, scikit-learn, matplotlib, jupyter.
@@ -32,7 +32,7 @@ matplotlib
 jupyterlab
 ```
 
-## Como começar (local)
+## Como rodar local
 
 1. Criar ambiente virtual e instalar dependências:
 
@@ -46,13 +46,13 @@ pip install -r requirements.txt
 
 3. Rodar scripts em `src/`.
 
-## Contrato mínimo (inputs / outputs)
+## Inputs / Outputs
 
 - Input: CSV(s) com registros.
 - Output: relatórios com recomendações.
 - Possíveis problemas: valores nulos/inconsistentes; previstas etapas de limpeza e validação.
 
-## Próximos passos sugeridos
+## Próximos passos
 
 1. Inspecionar os arquivos na pasta `data/` e documentar colunas e tipos.
 2. Criar os scripts na pasta `src/` e definir a(s) tarefa(s) de ML (ex.: classificar gravidade, agrupar tipos de não conformidade).
