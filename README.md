@@ -55,4 +55,4 @@ pip install -r requirements.txt
 ## Próximos passos sugeridos
 
 1. Inspecionar os arquivos na pasta `data/` e documentar colunas e tipos.
-2. Criar notebook de EDA e definir a(s) tarefa(s) de ML (ex.: classificar gravidade, agrupar tipos de não conformidade).
+2. Criar os scripts na pasta `src/` e definir a(s) tarefa(s) de ML (ex.: classificar gravidade, agrupar tipos de não conformidade).
