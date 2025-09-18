@@ -1,26 +1,24 @@
 # pji410_a2025s2
 
-
 ## Resumo
-Aplicação de técnicas de análise de dados e aprendizagem de máquina sobre datasets, com objetivo de identificar padrões e gerar visualizações que apoiem decisões.
 
+Aplicação de técnicas de análise de dados e aprendizagem de máquina sobre datasets, com objetivo de identificar padrões e gerar visualizações que apoiem decisões.
 
 ## Objetivos
 
 - Preparar e limpar os dados.
 - Explorar padrões e gerar visualizações.
-- Treinar modelos de machine learning (por ex.:  clustering).
+- Treinar modelos de machine learning (por ex.: clustering).
 
 ## Estrutura do repositório
 
 - `data/` — datasets (não adicione dados sensíveis ao repositório público).
 - `src/` — módulos Python: pré-processamento, treino, inferência, utilitários.
 
-
 ## Dependências
 
 - Python 3.11+ (usar virtualenv ou venv).
-- Bibliotecas principais: pandas, numpy, scikit-learn, matplotlib, jupyter.
+- Bibliotecas principais: pandas, numpy, scikit-learn
 
 Exemplo mínimo de `requirements.txt`:
 
@@ -28,8 +26,8 @@ Exemplo mínimo de `requirements.txt`:
 pandas
 numpy
 scikit-learn
-matplotlib
-jupyterlab
+duckdb
+joblib
 ```
 
 ## Como rodar local

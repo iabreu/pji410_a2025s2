@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Pre-commit hook to scan for potential secrets in staged files.
+# Install: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+python3 .githooks/scan_secrets.py $STAGED_FILES || {
+  echo "Secret scan failed. Fix issues or use --no-verify to bypass (not recommended)." >&2
+  exit 1
+}
+
+exit 0
