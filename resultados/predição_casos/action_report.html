@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+  <meta charset='utf-8'/>
+    <title>Previsão de Casos — Séries Temporais</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 1.4rem; }
+    h1 { font-size: 1.4rem; }
+    pre { background: #f7f7f7; padding: .6rem; }
+  </style>
+  </head>
+  <body>
+    <h1>Previsão de Casos — Próximos 48 meses</h1>
+        <p>Veja o arquivo forecast_plot.png para o gráfico, forecast_48m.csv para os valores previstos
+             e forecast_by_municipio_48m.csv para os detalhes por município.</p>
+    <pre>Previsão de Casos — Séries Temporais
+
+Resumo do que é o resultado:
+- A série histórica foi agregada por mês (quantidade de casos por mês).
+- Um modelo de tendência sazonal (sem statsmodels) aprendeu padrões e sazonalidades para prever os próximos 48 meses.
+- A curva vermelha mostra a previsão; a faixa indica a incerteza (intervalo de confiança).
+
+Principais destaques:
+- Total histórico analisado (soma): 13963
+- Média mensal histórica: 97.0
+- Projeção para os próximos 12 meses: ~840 casos
+
+Top 10 municípios por projeção (próximos 12 meses):
+ - Pedreira: ~60 casos
+ - Tietê: ~54 casos
+ - Analândia: ~44 casos
+ - Amparo: ~33 casos
+ - Jundiaí: ~33 casos
+ - Jaguariúna: ~33 casos
+ - Santa Bárbara D'Oeste: ~32 casos
+ - São Pedro: ~32 casos
+ - Sorocaba: ~32 casos
+ - Valinhos: ~29 casos
+
+Comparação anual (últimos 12 meses vs próximos 12 meses) para o Top 10:
+ - Pedreira: histórico ~73 → previsão ~60 (-13)
+ - Tietê: histórico ~21 → previsão ~54 (+33)
+ - Analândia: histórico ~2 → previsão ~44 (+42)
+ - Amparo: histórico ~14 → previsão ~33 (+19)
+ - Jundiaí: histórico ~2 → previsão ~33 (+31)
+ - Jaguariúna: histórico ~9 → previsão ~33 (+24)
+ - Santa Bárbara D'Oeste: histórico ~0 → previsão ~32 (+32)
+ - São Pedro: histórico ~3 → previsão ~32 (+29)
+ - Sorocaba: histórico ~14 → previsão ~32 (+18)
+ - Valinhos: histórico ~2 → previsão ~29 (+27)
+
+Próximos passos sugeridos:
+1) Usar a projeção anual para planejamento de recursos e ações preventivas.
+2) Atualizar a previsão mensalmente conforme novos dados forem chegando.
+3) Acompanhar desvios significativos entre observado e previsto e revisar o modelo semestralmente.
+
+  </body>
+</html>
