@@ -1,56 +1,100 @@
 # pji410_a2025s2
 
-## Resumo
-
-Aplicação de técnicas de análise de dados e aprendizagem de máquina sobre datasets, com objetivo de identificar padrões e gerar visualizações que apoiem decisões.
-
 ## Objetivos
 
-- Preparar e limpar os dados.
-- Explorar padrões e gerar visualizações.
-- Treinar modelos de machine learning (por ex.: clustering).
+- Limpar e preparar dados de fiscalização
+- Predizer probabilidade de multas
+- Agrupar municípios por padrão de não conformidades (clustering)
+- Prever casos futuros (forecasting - 48 meses)
+- Classificar status de resolução (aberto/baixado)
+- Estimar tempo de resolução
 
 ## Estrutura do repositório
 
-- `data/` — datasets (não adicione dados sensíveis ao repositório público).
-- `src/` — módulos Python: pré-processamento, treino, inferência, utilitários.
+```
+pji410_a2025s2/
+├── data/                    # CSV protegido por senha
+│   └── fiscalizacao.csv.zip
+├── src/                     # Módulos de análise
+│   ├── prediction/         # Predição de multas
+│   ├── clustering/         # Agrupamento de municípios
+│   ├── forecasting/        # Previsão de casos futuros
+│   ├── resolution_classification/  # Classificação de status
+│   ├── resolution_regression/      # Estimativa de tempo
+│   └── helpers/            # Utilitários (extração, carregamento)
+├── sql/                    # Queries de limpeza (DuckDB)
+│   └── clean_fiscalizacao.sql
+└── results/                # CSVs gerados (Municipio como chave)
+```
 
 ## Dependências
 
-- Python 3.11+ (usar virtualenv ou venv).
-- Bibliotecas principais: pandas, numpy, scikit-learn
-
-Exemplo mínimo de `requirements.txt`:
-
-```text
-pandas
-numpy
-scikit-learn
-duckdb
-joblib
-```
-
-## Como rodar local
-
-1. Criar ambiente virtual e instalar dependências:
+- Python 3.11+
+- Bibliotecas: pandas, numpy, scikit-learn, duckdb
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate   # Windows
+pip install pandas numpy scikit-learn duckdb
 ```
 
-2. Colocar os datasets no diretório `data/` (manter cópias seguras fora do repo se sensível).
+## Como executar
 
-3. Rodar scripts em `src/`.
+Cada módulo gera um CSV em `results/`:
 
-## Inputs / Outputs
+```bash
+# Predição de multas
+python src/prediction/main.py
 
-- Input: CSV(s) com registros.
-- Output: relatórios com recomendações.
-- Possíveis problemas: valores nulos/inconsistentes; previstas etapas de limpeza e validação.
+# Clustering de municípios
+python src/clustering/main.py
 
-## Próximos passos
+# Previsão de casos (48 meses)
+python src/forecasting/main.py
+```
 
-1. Inspecionar os arquivos na pasta `data/` e documentar colunas e tipos.
-2. Criar os scripts na pasta `src/` e definir a(s) tarefa(s) de ML (ex.: classificar gravidade, agrupar tipos de não conformidade).
+## Outputs
+
+Todos os CSVs possuem `Municipio` como primeira coluna para facilitar a análise.
+
+### 1. clustering_municipio_YYYYMMDD_HHMMSS.csv
+
+Agrupamento de municípios por padrão de não conformidades.
+
+**Colunas:**
+
+- `Municipio` - nome do município
+- `Cluster` - ID do cluster (0, 1, 2, 3...)
+- `total_nao_conformidades` - total de não conformidades
+- `top_codigo_1`, `top_codigo_2`, `top_codigo_3` - códigos mais frequentes
+- `freq_codigo_1`, `freq_codigo_2`, `freq_codigo_3` - frequências dos códigos
+
+### 2. forecasting_municipio_YYYYMMDD_HHMMSS.csv
+
+Previsão de casos futuros (12, 24 e 48 meses) por município.
+
+**Colunas:**
+
+- `Municipio` - nome do município
+- `historico_total` - total histórico de casos
+- `historico_12m` - casos nos últimos 12 meses
+- `previsao_12m` - previsão para próximos 12 meses
+- `previsao_24m` - previsão para próximos 24 meses
+- `previsao_48m` - previsão para próximos 48 meses
+- `tendencia` - tendência (crescente, estável, decrescente)
+
+## Configuração
+
+Os módulos utilizam um dicionário `event` para configuração:
+
+```python
+event = {
+    "data_folder": "data",
+    "zip_file": "fiscalizacao.csv.zip",
+    "csv_file": "fiscalizacao.csv",
+    "sql_file": "clean_fiscalizacao.sql",
+    "db_file": "fiscalizacao.db",
+    "zip_password": "",
+}
+```
