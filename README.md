@@ -41,9 +41,6 @@ pip install pandas numpy scikit-learn duckdb
 Cada módulo gera um CSV em `results/`:
 
 ```bash
-# Predição de multas
-python src/prediction/main.py
-
 # Clustering de municípios
 python src/clustering/main.py
 
