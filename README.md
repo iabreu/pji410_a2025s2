@@ -2,12 +2,9 @@
 
 ## Objetivos
 
-- Limpar e preparar dados de fiscalização
-- Predizer probabilidade de multas
+- Limpar e preparar dados para análise
 - Agrupar municípios por padrão de não conformidades (clustering)
 - Prever casos futuros (forecasting - 48 meses)
-- Classificar status de resolução (aberto/baixado)
-- Estimar tempo de resolução
 
 ## Estrutura do repositório
 
