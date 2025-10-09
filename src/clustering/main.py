@@ -16,6 +16,11 @@ if PROJECT_ROOT not in sys.path:
 
 from src.helpers.extract_zip import extract, ZipExtractionError
 from src.helpers.load_csv import load_csv
+from src.helpers.normalize import (
+    municipio_key_series,
+    key_to_display_map,
+    winsorize_series,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,7 +39,11 @@ def cluster_municipios(
             "Colunas necessárias ausentes: 'Municipio' e 'Código Não Conformidade'"
         )
 
-    matrix = pd.crosstab(df["Municipio"], df["Código Não Conformidade"]).astype(
+    if "Municipio_key" not in df.columns:
+        df["Municipio_key"] = municipio_key_series(df["Municipio"])
+    key_map = key_to_display_map(df)
+
+    matrix = pd.crosstab(df["Municipio_key"], df["Código Não Conformidade"]).astype(
         np.float64
     )
 
@@ -59,17 +68,31 @@ def cluster_municipios(
         clusters = kmeans.fit_predict(matrix)
         result = pd.DataFrame({"Municipio": matrix.index, "Cluster": clusters})
 
-    raw_counts = pd.crosstab(df["Municipio"], df["Código Não Conformidade"])
-    result["total_nao_conformidades"] = result["Municipio"].map(raw_counts.sum(axis=1))
+    raw_counts = pd.crosstab(df["Municipio_key"], df["Código Não Conformidade"]).astype(
+        float
+    )
+    raw_counts = raw_counts.apply(lambda row: winsorize_series(row, 0.0, 0.99), axis=1)
+
+    result["Municipio"] = [key_map.get(k, k) for k in result["Municipio"].tolist()]
+    result["total_nao_conformidades"] = result["Municipio"].map(
+        pd.Series(
+            raw_counts.sum(axis=1).values,
+            index=[key_map.get(k, k) for k in raw_counts.index],
+        )
+    )
+    result["total_nao_conformidades"] = (
+        result["total_nao_conformidades"].fillna(0).round().astype(int)
+    )
 
     for i in range(1, 4):
         result[f"top_codigo_{i}"] = ""
         result[f"freq_codigo_{i}"] = 0
 
     for idx, row in result.iterrows():
-        muni = row["Municipio"]
-        if muni in raw_counts.index:
-            top = raw_counts.loc[muni].sort_values(ascending=False).head(3)
+        muni_display = row["Municipio"]
+        muni_key = municipio_key_series(pd.Series([muni_display])).iloc[0]
+        if muni_key in raw_counts.index:
+            top = raw_counts.loc[muni_key].sort_values(ascending=False).head(3)
             for i, (code, freq) in enumerate(top.items(), 1):
                 result.at[idx, f"top_codigo_{i}"] = str(code)
                 result.at[idx, f"freq_codigo_{i}"] = int(freq)
@@ -116,6 +139,13 @@ def main(event: dict):
     df_municipio = cluster_municipios(
         df, output_dir=results_dir, max_k_cap=10, default_k=4
     )
+
+    if "Cluster" in df_municipio.columns:
+        df_municipio = df_municipio.drop(columns=["Cluster"])
+
+    float_cols = df_municipio.select_dtypes(include=[np.floating]).columns
+    if len(float_cols) > 0:
+        df_municipio[float_cols] = df_municipio[float_cols].round(2)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_path = os.path.join(results_dir, f"clustering_municipio_{timestamp}.csv")

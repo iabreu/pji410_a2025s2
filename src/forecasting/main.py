@@ -16,6 +16,11 @@ if PROJECT_ROOT not in sys.path:
 
 from src.helpers.extract_zip import extract, ZipExtractionError
 from src.helpers.load_csv import load_csv
+from src.helpers.normalize import (
+    municipio_key_series,
+    key_to_display_map,
+    winsorize_series,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,15 +41,19 @@ def _prepare_monthly_by_municipio(df: pd.DataFrame) -> pd.DataFrame:
     if "Municipio" not in df.columns:
         return pd.DataFrame()
     df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-    s = df.dropna(subset=[date_col, "Municipio"]).set_index(date_col).sort_index()
+    s = df.dropna(subset=[date_col, "Municipio_key"]).set_index(date_col).sort_index()
     g = (
-        s.groupby([pd.Grouper(freq="MS"), "Municipio"])
+        s.groupby([pd.Grouper(freq="MS"), "Municipio_key"])
         .size()
         .rename("count")
         .reset_index()
     )
-    pivot = g.pivot(index=date_col, columns="Municipio", values="count").sort_index()
-    return pivot.fillna(0.0)
+    pivot = g.pivot(
+        index=date_col, columns="Municipio_key", values="count"
+    ).sort_index()
+    pivot = pivot.fillna(0.0)
+    pivot = pivot.apply(lambda col: winsorize_series(col, 0.01, 0.99))
+    return pivot
 
 
 def _make_time_features(idx: pd.DatetimeIndex) -> pd.DataFrame:
@@ -69,13 +78,112 @@ def _fit_predict_series(y: pd.Series, horizon: int, alpha: float = 1.0) -> pd.Se
     )
     Xf = _make_time_features(fut_idx)
     y_fore = model.predict(Xf.values)
+    y_fore = np.clip(y_fore, 0.0, None)
 
     return pd.Series(y_fore, index=fut_idx, name="forecast")
+
+
+def _safe_mape(y_true: pd.Series, y_pred: pd.Series) -> float:
+    """Compute MAPE guarded against zeros/NaNs; return inf if not computable."""
+    y_true = pd.Series(y_true).astype(float).values
+    y_pred = pd.Series(y_pred).astype(float).values
+    mask = np.isfinite(y_true) & np.isfinite(y_pred) & (y_true > 0)
+    if mask.sum() == 0:
+        return float("inf")
+    return float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])))
+
+
+def _mean_level(y_train: pd.Series, horizon: int) -> pd.Series:
+    lvl = max(0.0, float(pd.Series(y_train).astype(float).mean()))
+    return pd.Series(np.full(horizon, lvl, dtype=float))
+
+
+def _moving_average_level(y_train: pd.Series, horizon: int, window: int) -> pd.Series:
+    s = pd.Series(y_train).astype(float)
+    lvl = s.rolling(window, min_periods=max(1, window // 2)).mean().iloc[-1]
+    if not np.isfinite(lvl):
+        lvl = float(s.mean())
+    lvl = max(0.0, float(lvl))
+    return pd.Series(np.full(horizon, lvl, dtype=float))
+
+
+def _seasonal_naive(y_train: pd.Series, horizon: int) -> pd.Series:
+    s = pd.Series(y_train).astype(float).values
+    n = len(s)
+    if n >= 12:
+        last12 = np.asarray(s[-12:], dtype=float)
+        reps = int(np.ceil(horizon / 12))
+        fc = np.tile(last12, reps)[:horizon]
+    else:
+        lvl = max(0.0, float(np.nanmean(s)))
+        fc = np.full(horizon, lvl, dtype=float)
+    return pd.Series(np.clip(fc, 0.0, None))
+
+
+def _select_and_forecast(y: pd.Series, horizon: int = 48) -> pd.Series:
+    """Choose best simple forecaster by short backtest, then forecast horizon."""
+    y = pd.Series(y).astype(float)
+    n = y.dropna().shape[0]
+    if n < 6:
+        lvl = max(0.0, float(y.mean())) if np.isfinite(y.mean()) else 0.0
+        return pd.Series(np.full(horizon, lvl, dtype=float))
+
+    valid_h = min(6, max(1, n // 4))
+    y_train = y.iloc[:-valid_h]
+    y_valid = y.iloc[-valid_h:]
+
+    candidates = [
+        ("mean", lambda s, h: _mean_level(s, h)),
+        ("ma3", lambda s, h: _moving_average_level(s, h, 3)),
+        ("ma6", lambda s, h: _moving_average_level(s, h, 6)),
+        ("ma12", lambda s, h: _moving_average_level(s, h, 12)),
+        ("seasonal", lambda s, h: _seasonal_naive(s, h)),
+    ]
+
+    def _model_alpha(a: float):
+        return lambda s, h: pd.Series(
+            np.clip(
+                np.asarray(_fit_predict_series(pd.Series(s), horizon=h, alpha=a)),
+                0.0,
+                None,
+            )
+        )
+
+    candidates.extend(
+        [
+            ("model_a0.5", _model_alpha(0.5)),
+            ("model_a1.0", _model_alpha(1.0)),
+            ("model_a2.0", _model_alpha(2.0)),
+        ]
+    )
+
+    best_err = float("inf")
+    best_fn = None
+    for _, fn in candidates:
+        try:
+            pred = fn(y_train, valid_h)
+            err = _safe_mape(y_valid, pred)
+            if err < best_err:
+                best_err = err
+                best_fn = fn
+        except Exception:
+            continue
+
+    if best_fn is None:
+        best_fn = lambda s, h: _mean_level(s, h)
+
+    y_fore = best_fn(y, horizon)
+    y_fore = pd.Series(np.clip(pd.Series(y_fore).astype(float).values, 0.0, None))
+    return y_fore
 
 
 def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFrame:
     """Generate municipio-level forecasting summary CSV."""
     df = load_csv(csv_path=csv_path, sql_path=sql_path, db_path=db_path)
+    if "Municipio_key" not in df.columns and "Municipio" in df.columns:
+        df["Municipio_key"] = municipio_key_series(df["Municipio"])
+    key_map = key_to_display_map(df)
+
     monthly_by_muni = _prepare_monthly_by_municipio(df)
 
     if monthly_by_muni.empty:
@@ -83,14 +191,22 @@ def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFr
 
     results = []
 
-    for muni in monthly_by_muni.columns:
-        y = monthly_by_muni[muni].astype(float)
+    for muni_key in monthly_by_muni.columns:
+        y = monthly_by_muni[muni_key].astype(float)
 
         if y.dropna().shape[0] < 6:
             mean_val = float(y.mean()) if np.isfinite(y.mean()) else 0.0
+            mean_val = max(0.0, mean_val)
             results.append(
                 {
-                    "Municipio": muni,
+                    "Municipio": key_map.get(
+                        muni_key,
+                        (
+                            df.loc[df["Municipio_key"] == muni_key, "Municipio"].iloc[0]
+                            if (df["Municipio_key"] == muni_key).any()
+                            else muni_key
+                        ),
+                    ),
                     "historico_total": int(y.sum()),
                     "historico_12m": int(y.tail(12).sum()),
                     "previsao_12m": int(mean_val * 12),
@@ -101,7 +217,7 @@ def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFr
             )
             continue
 
-        forecast = _fit_predict_series(y, horizon=48, alpha=1.0)
+        forecast = _select_and_forecast(y, horizon=48)
 
         hist_total = int(y.sum())
         hist_12m = int(y.tail(12).sum())
@@ -122,7 +238,14 @@ def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFr
 
         results.append(
             {
-                "Municipio": muni,
+                "Municipio": key_map.get(
+                    muni_key,
+                    (
+                        df.loc[df["Municipio_key"] == muni_key, "Municipio"].iloc[0]
+                        if (df["Municipio_key"] == muni_key).any()
+                        else muni_key
+                    ),
+                ),
                 "historico_total": hist_total,
                 "historico_12m": hist_12m,
                 "previsao_12m": prev_12m,
@@ -160,6 +283,10 @@ def main(event: dict):
     df_municipio = forecast_and_report(
         csv_path=csv_path, sql_path=sql_path, db_path=db_path
     )
+
+    float_cols = df_municipio.select_dtypes(include=[np.floating]).columns
+    if len(float_cols) > 0:
+        df_municipio[float_cols] = df_municipio[float_cols].round(2)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_path = os.path.join(results_dir, f"forecasting_municipio_{timestamp}.csv")
