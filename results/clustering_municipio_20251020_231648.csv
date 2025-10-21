@@ -1,0 +1,77 @@
+Municipio,total_nao_conformidades,top_codigo_1,freq_codigo_1,top_codigo_2,freq_codigo_2,top_codigo_3,freq_codigo_3
+Americana,280,EEE-7.4,20,EEA-4.7,19,RES-6.3,19
+Amparo,253,RES-6.11,24,RES-6.2,20,CG-9.38.4,14
+Analândia,283,CG-9.38.4,56,CG-9.38.2,15,CSB-2.11,11
+Araçoiaba Da Serra,111,CG-9.37.1,8,RES-6.10,7,RES-6.4,6
+Araraquara,175,CG-9.38.4,16,RES-6.2,13,RES-6.3,13
+Araras,277,RES-6.11,25,RES-6.7,21,RES-6.3,19
+Artur Nogueira,228,RES-6.7,18,CSB-2.2,14,CSB-2.3,14
+Atibaia,158,EEA-4.5,15,EEA-4.4,14,RES-6.2,10
+Barretos,182,RES-6.2,10,ETE-8.13,7,RES-6.10,6
+Bom Jesus Dos Perdões,266,RES-6.2,17,CG-9.38.8,12,CG-9.38.4,11
+Brotas,190,RES-6.9,13,CG-9.38.4,12,CSB-2.4,9
+Campinas,91,RES-6.4,10,EEE-7.9,8,EEE-7.4,7
+Capivari,373,CSB-2.3,40,CSB-2.5,18,CSB-2.6,17
+Catanduva,87,RES-6.7,8,CSB-2.14,7,RES-6.9,7
+Cerquilho,71,RES-6.2,9,EEA-4.5,6,EEE-7.4,5
+Cordeirópolis,158,CG-9.38.4,19,RES-6.3,10,RES-6.10,10
+Corumbataí,132,CG-9.38.4,24,RES-6.11,7,CG-9.37.1,6
+Cosmópolis,125,EEE-7.4,9,RES-6.3,7,EEE-7.3,6
+Dois Córregos,226,RES-6.2,16,CG-9.38.4,13,RES-6.11,11
+Engenheiro Coelho,217,RES-6.11,12,CSB-2.14,11,CSB-2.3,10
+Guaíra,1,CG-9.38.4,1,ADU-1.1,0,CG-9.1,0
+Holambra,146,CG-9.38.4,13,RES-6.9,13,RES-6.14,6
+Ibaté,254,CSB-2.11,13,CSB-2.6,12,RES-6.11,12
+Indaiatuba,146,RES-6.9,25,RES-6.2,14,EEA-4.7,9
+Ipeúna,228,CG-9.38.4,52,EEE-7.4,8,CSB-2.2,7
+Iracemápolis,250,CG-9.38.4,27,CG-9.38.2,16,EEE-7.12,8
+Itapira,50,CG-9.38.10,3,EEE-7.4,3,EEE-7.6,3
+Itirapina,152,CG-9.38.4,13,RES-6.3,11,CSB-2.12,9
+Itu,245,CG-9.37.1,38,EEE-7.4,18,EEE-7.6,18
+Jaboticabal,199,RES-6.11,14,CG-9.37.1,12,RES-6.2,12
+Jaguariúna,219,RES-6.2,17,EEE-7.6,16,RES-6.11,13
+Jumirim,58,CG-9.38.4,12,CSB-2.2,6,EEE-7.6,3
+Jundiaí,196,EEA-4.5,30,RES-6.2,24,EEA-4.4,23
+Leme,88,CG-9.38.8,5,RES-6.2,5,RES-6.9,5
+Limeira,43,CG-9.37.1,8,EEE-7.4,5,RES-6.3,5
+Lindoia,2,CG-9.1,1,CG-9.40,1,ADU-1.2,0
+Louveira,258,RES-6.2,28,RES-6.7,19,RES-6.11,16
+Luiz Antônio,27,RES-6.9,3,CSB-2.12,2,CSB-2.2,2
+Macaubal,38,CG-9.16,1,CG-9.12,1,CG-9.15,1
+Matão,48,CSB-2.14,9,RES-6.7,4,RES-6.3,4
+Mogi Das Cruzes,72,RES-6.2,5,EEA-4.5,4,EEE-7.6,4
+Mogi Guaçu,319,RES-6.7,18,RES-6.2,18,RES-6.3,13
+Mogi Mirim,127,EEE-7.6,9,EEA-4.4,9,RES-6.3,6
+Monte Alegre Do Sul,302,CG-9.38.4,48,RES-6.2,21,RES-6.4,11
+Nova Odessa,72,RES-6.2,6,CG-9.38.4,5,EEE-7.6,5
+Olímpia,177,CSB-2.4,19,RES-6.2,18,CSB-2.3,17
+Orlândia,234,RES-6.14,24,CSB-2.15,19,RES-6.9,18
+Paraibuna,133,RES-6.11,15,CSB-2.11,8,CSB-2.4,6
+Pedreira,469,RES-6.11,49,RES-6.2,39,RES-6.4,24
+Piracicaba,260,RES-6.2,49,RES-6.9,28,CG-9.37.1,22
+Pirassununga,112,RES-6.3,13,RES-6.2,12,EEE-7.6,10
+Porto Feliz,147,RES-6.9,14,EEE-7.3,12,EEE-7.4,12
+Rafard,210,CG-9.38.4,28,CSB-2.3,16,CSB-2.2,14
+Ribeirão Preto,492,CSB-2.3,53,RES-6.9,42,RES-6.14,24
+Rio Claro,250,RES-6.2,25,RES-6.1,23,RES-6.7,20
+Rio Das Pedras,338,CG-9.38.4,24,CSB-2.2,12,CSB-2.4,11
+Saltinho,97,CG-9.38.4,15,CSB-2.11,4,CSB-2.6,4
+Salto,331,RES-6.2,25,RES-6.9,23,RES-6.7,15
+Santa Bárbara D'Oeste,231,RES-6.2,28,RES-6.4,19,RES-6.9,19
+Santa Cruz Das Palmeiras,96,RES-6.7,10,RES-6.2,9,RES-6.9,9
+Santa Rita Do Passa Quatro,77,CG-9.38.4,7,RES-6.7,7,RES-6.9,6
+Santo Antônio De Posse,211,CG-9.38.4,10,CSB-2.11,8,RES-6.9,7
+São Carlos,303,RES-6.3,21,EEE-7.4,16,EEE-7.5,15
+São José do Rio Pardo,188,RES-6.2,15,RES-6.10,12,RES-6.11,11
+São José do Rio Preto ,119,CSB-2.3,13,RES-6.4,12,RES-6.13,11
+São Pedro,241,CG-9.38.4,20,CSB-2.2,18,RES-6.2,15
+São Simão,39,CSB-2.14,6,CSB-2.2,5,RES-6.9,5
+Serrana,147,CSB-2.3,16,CSB-2.2,14,RES-6.11,14
+Sertãozinho,137,CSB-2.16,12,RES-6.7,10,CSB-2.3,8
+Sorocaba,312,EEE-7.4,34,EEE-7.6,24,RES-6.2,24
+Sumaré,212,RES-6.4,17,ETE-8.5,16,ETE-8.17,14
+Tambaú,95,RES-6.11,4,CG-9.38.2,2,CSP-3.5,2
+Tietê,384,CSB-2.11,36,CSB-2.3,34,CG-9.38.4,29
+Valinhos,180,EEE-7.6,14,EEA-4.4,13,RES-6.2,12
+Vinhedo,260,EEE-7.6,22,RES-6.4,18,RES-6.2,18
+Votorantim,58,RES-6.9,10,RES-6.7,9,RES-6.10,7

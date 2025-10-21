@@ -19,7 +19,6 @@ from src.helpers.load_csv import load_csv
 from src.helpers.normalize import (
     municipio_key_series,
     key_to_display_map,
-    winsorize_series,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -71,7 +70,6 @@ def cluster_municipios(
     raw_counts = pd.crosstab(df["Municipio_key"], df["Código Não Conformidade"]).astype(
         float
     )
-    raw_counts = raw_counts.apply(lambda row: winsorize_series(row, 0.0, 0.99), axis=1)
 
     result["Municipio"] = [key_map.get(k, k) for k in result["Municipio"].tolist()]
     result["total_nao_conformidades"] = result["Municipio"].map(
@@ -95,7 +93,7 @@ def cluster_municipios(
             top = raw_counts.loc[muni_key].sort_values(ascending=False).head(3)
             for i, (code, freq) in enumerate(top.items(), 1):
                 result.at[idx, f"top_codigo_{i}"] = str(code)
-                result.at[idx, f"freq_codigo_{i}"] = int(freq)
+                result.at[idx, f"freq_codigo_{i}"] = int(round(freq))
 
     return result[
         [
@@ -160,6 +158,6 @@ if __name__ == "__main__":
         "csv_file": "fiscalizacao.csv",
         "sql_file": "clean_fiscalizacao.sql",
         "db_file": "fiscalizacao.db",
-        "zip_password": "",
+        "zip_password": "univesp",
     }
     main(event)
