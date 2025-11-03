@@ -62,7 +62,7 @@ def _engineer_features(
     y = (
         df["Condição"]
         .fillna("Status Desconhecido")
-        .apply(lambda s: 1 if str(s).strip().lower() == "aberto" else 0)
+        .apply(lambda s: 1 if str(s).strip().lower() == "vencido" else 0)
     )
 
     cat_cols = [
@@ -127,28 +127,28 @@ def train_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFrame
 
     df_result = df[["Municipio_key", "Municipio"]].copy()
     df_result["status"] = y
-    df_result["prob_aberto"] = y_proba_all
+    df_result["prob_vencido"] = y_proba_all
 
     agg = (
         df_result.groupby("Municipio_key")
         .agg(
             total_casos=("status", "count"),
-            casos_abertos=("status", "sum"),
-            prob_aberto_media=("prob_aberto", "mean"),
+            casos_vencidos=("status", "sum"),
+            prob_vencido_media=("prob_vencido", "mean"),
         )
         .reset_index()
     )
 
-    agg["casos_baixados"] = agg["total_casos"] - agg["casos_abertos"]
-    agg["prob_aberto_media"] = agg["prob_aberto_media"].round(4)
+    agg["casos_baixados_e_abertos"] = agg["total_casos"] - agg["casos_vencidos"]
+    agg["prob_vencido_media"] = agg["prob_vencido_media"].round(4)
     agg["Municipio"] = agg["Municipio_key"].map(lambda k: key_map.get(k, k))
     return agg[
         [
             "Municipio",
             "total_casos",
-            "casos_abertos",
-            "casos_baixados",
-            "prob_aberto_media",
+            "casos_vencidos",
+            "casos_baixados_e_abertos",
+            "prob_vencido_media",
         ]
     ]
 
@@ -196,6 +196,6 @@ if __name__ == "__main__":
         "csv_file": "fiscalizacao.csv",
         "sql_file": "clean_fiscalizacao.sql",
         "db_file": "fiscalizacao.db",
-        "zip_password": "",
+        "zip_password": "univesp",
     }
     main(event)
