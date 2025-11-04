@@ -57,7 +57,6 @@ def _prepare_monthly_by_municipio(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _make_time_features(idx: pd.DatetimeIndex) -> pd.DataFrame:
-    """Create time-based features for regression."""
     t = np.arange(len(idx), dtype=float)
     month = idx.month.values
     sin_m = np.sin(2 * np.pi * month / 12.0)
@@ -66,7 +65,6 @@ def _make_time_features(idx: pd.DatetimeIndex) -> pd.DataFrame:
 
 
 def _fit_predict_series(y: pd.Series, horizon: int, alpha: float = 1.0) -> pd.Series:
-    """Fit Ridge model and predict future values."""
     y = y.astype(float).copy()
     X = _make_time_features(y.index)
     model = Ridge(alpha=alpha, random_state=42)
@@ -84,7 +82,6 @@ def _fit_predict_series(y: pd.Series, horizon: int, alpha: float = 1.0) -> pd.Se
 
 
 def _safe_mape(y_true: pd.Series, y_pred: pd.Series) -> float:
-    """Compute MAPE guarded against zeros/NaNs; return inf if not computable."""
     y_true = pd.Series(y_true).astype(float).values
     y_pred = pd.Series(y_pred).astype(float).values
     mask = np.isfinite(y_true) & np.isfinite(y_pred) & (y_true > 0)
@@ -94,7 +91,14 @@ def _safe_mape(y_true: pd.Series, y_pred: pd.Series) -> float:
 
 
 def _mean_level(y_train: pd.Series, horizon: int) -> pd.Series:
-    lvl = max(0.0, float(pd.Series(y_train).astype(float).mean()))
+    s = pd.Series(y_train).astype(float)
+    lvl = max(0.0, float(s.mean()))
+    if isinstance(s.index, pd.DatetimeIndex) and len(s.index) > 0:
+        last = s.index[-1]
+        fut_idx = pd.date_range(
+            start=last + pd.offsets.MonthBegin(1), periods=horizon, freq="MS"
+        )
+        return pd.Series(np.full(horizon, lvl, dtype=float), index=fut_idx)
     return pd.Series(np.full(horizon, lvl, dtype=float))
 
 
@@ -104,20 +108,36 @@ def _moving_average_level(y_train: pd.Series, horizon: int, window: int) -> pd.S
     if not np.isfinite(lvl):
         lvl = float(s.mean())
     lvl = max(0.0, float(lvl))
+    if isinstance(s.index, pd.DatetimeIndex) and len(s.index) > 0:
+        last = s.index[-1]
+        fut_idx = pd.date_range(
+            start=last + pd.offsets.MonthBegin(1), periods=horizon, freq="MS"
+        )
+        return pd.Series(np.full(horizon, lvl, dtype=float), index=fut_idx)
     return pd.Series(np.full(horizon, lvl, dtype=float))
 
 
 def _seasonal_naive(y_train: pd.Series, horizon: int) -> pd.Series:
-    s = pd.Series(y_train).astype(float).values
-    n = len(s)
+    """Seasonal naive: repeat the last 12 months; ensure monthly DatetimeIndex."""
+    s = pd.Series(y_train).astype(float)
+    vals = s.values
+    n = len(vals)
     if n >= 12:
-        last12 = np.asarray(s[-12:], dtype=float)
+        last12 = np.asarray(vals[-12:], dtype=float)
         reps = int(np.ceil(horizon / 12))
         fc = np.tile(last12, reps)[:horizon]
     else:
-        lvl = max(0.0, float(np.nanmean(s)))
+        lvl = max(0.0, float(np.nanmean(vals)))
         fc = np.full(horizon, lvl, dtype=float)
-    return pd.Series(np.clip(fc, 0.0, None))
+
+    fc = np.clip(fc, 0.0, None)
+    if isinstance(s.index, pd.DatetimeIndex) and len(s.index) > 0:
+        last = s.index[-1]
+        fut_idx = pd.date_range(
+            start=last + pd.offsets.MonthBegin(1), periods=horizon, freq="MS"
+        )
+        return pd.Series(fc, index=fut_idx)
+    return pd.Series(fc)
 
 
 def _select_and_forecast(y: pd.Series, horizon: int = 48) -> pd.Series:
@@ -174,44 +194,54 @@ def _select_and_forecast(y: pd.Series, horizon: int = 48) -> pd.Series:
 
     y_fore = best_fn(y, horizon)
     y_fore = pd.Series(np.clip(pd.Series(y_fore).astype(float).values, 0.0, None))
+    if isinstance(y.index, pd.DatetimeIndex) and len(y.index) > 0:
+        last = y.index[-1]
+        fut_idx = pd.date_range(
+            start=last + pd.offsets.MonthBegin(1), periods=horizon, freq="MS"
+        )
+        y_fore.index = fut_idx
     return y_fore
 
 
-def _classify_tendencia(y: pd.Series, _: pd.Series) -> str:
+def _classify_tendencia(y: pd.Series, forecast: pd.Series) -> str:
     y = pd.Series(y).astype(float)
+    forecast = pd.Series(forecast).astype(float)
+
     y12 = y.tail(12)
+    f12 = forecast.iloc[:12]
 
-    if y12.shape[0] < 6:
+    if y12.shape[0] < 3 or f12.shape[0] < 3:
         return "estável"
 
-    if y12.shape[0] < 12:
-        split = y12.shape[0] // 2
-        if split == 0:
-            return "estável"
-        older = y12.iloc[:split]
-        newer = y12.iloc[split:]
-    else:
-        older = y12.iloc[:6]
-        newer = y12.iloc[6:]
+    hist_12m_sum = float(y12.sum())
+    fore_12m_sum = float(f12.sum())
 
-    m0 = float(np.nanmean(older))
-    m1 = float(np.nanmean(newer))
-
-    min_level = 1.0
-    if m0 < min_level and m1 < min_level:
+    if hist_12m_sum < 1 and fore_12m_sum < 1:
         return "estável"
 
-    eps = 0.5
-    ratio = (m1 + eps) / (m0 + eps)
+    if hist_12m_sum < 0.01:
+        return "crescente" if fore_12m_sum > 1 else "estável"
 
-    up_th = 1.2
-    dn_th = 1 / up_th
+    pct_change = ((fore_12m_sum - hist_12m_sum) / hist_12m_sum) * 100
 
-    if ratio >= up_th:
+    if abs(pct_change) < 10:
+        y36 = y.tail(36) if len(y) >= 36 else y
+        baseline_mean = float(y36.mean())
+        recent_mean = float(y12.mean())
+
+        if baseline_mean > 0.01:
+            long_term_ratio = recent_mean / baseline_mean
+            if long_term_ratio > 1.15 and fore_12m_sum >= hist_12m_sum * 0.9:
+                return "crescente"
+            elif long_term_ratio < 0.85 and fore_12m_sum <= hist_12m_sum * 1.1:
+                return "decrescente"
+
+    if pct_change > 10:
         return "crescente"
-    if ratio <= dn_th:
+    elif pct_change < -10:
         return "decrescente"
-    return "estável"
+    else:
+        return "estável"
 
 
 def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFrame:
