@@ -177,6 +177,43 @@ def _select_and_forecast(y: pd.Series, horizon: int = 48) -> pd.Series:
     return y_fore
 
 
+def _classify_tendencia(y: pd.Series, _: pd.Series) -> str:
+    y = pd.Series(y).astype(float)
+    y12 = y.tail(12)
+
+    if y12.shape[0] < 6:
+        return "estável"
+
+    if y12.shape[0] < 12:
+        split = y12.shape[0] // 2
+        if split == 0:
+            return "estável"
+        older = y12.iloc[:split]
+        newer = y12.iloc[split:]
+    else:
+        older = y12.iloc[:6]
+        newer = y12.iloc[6:]
+
+    m0 = float(np.nanmean(older))
+    m1 = float(np.nanmean(newer))
+
+    min_level = 1.0
+    if m0 < min_level and m1 < min_level:
+        return "estável"
+
+    eps = 0.5
+    ratio = (m1 + eps) / (m0 + eps)
+
+    up_th = 1.2
+    dn_th = 1 / up_th
+
+    if ratio >= up_th:
+        return "crescente"
+    if ratio <= dn_th:
+        return "decrescente"
+    return "estável"
+
+
 def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFrame:
     """Generate municipio-level forecasting summary CSV."""
     df = load_csv(csv_path=csv_path, sql_path=sql_path, db_path=db_path)
@@ -219,22 +256,13 @@ def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFr
 
         forecast = _select_and_forecast(y, horizon=48)
 
-        hist_total = int(y.sum())
-        hist_12m = int(y.tail(12).sum())
-        prev_12m = int(forecast.iloc[:12].sum())
-        prev_24m = int(forecast.iloc[:24].sum())
-        prev_48m = int(forecast.sum())
+        hist_total_f = float(y.sum())
+        hist_12m_f = float(y.tail(12).sum())
+        prev_12m_f = float(forecast.iloc[:12].sum())
+        prev_24m_f = float(forecast.iloc[:24].sum())
+        prev_48m_f = float(forecast.sum())
 
-        if hist_12m > 0:
-            trend_ratio = prev_12m / hist_12m
-            if trend_ratio > 1.1:
-                tendencia = "crescente"
-            elif trend_ratio < 0.9:
-                tendencia = "decrescente"
-            else:
-                tendencia = "estável"
-        else:
-            tendencia = "estável"
+        tendencia = _classify_tendencia(y, forecast)
 
         results.append(
             {
@@ -246,11 +274,11 @@ def forecast_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFr
                         else muni_key
                     ),
                 ),
-                "historico_total": hist_total,
-                "historico_12m": hist_12m,
-                "previsao_12m": prev_12m,
-                "previsao_24m": prev_24m,
-                "previsao_48m": prev_48m,
+                "historico_total": int(hist_total_f),
+                "historico_12m": int(hist_12m_f),
+                "previsao_12m": int(prev_12m_f),
+                "previsao_24m": int(prev_24m_f),
+                "previsao_48m": int(prev_48m_f),
                 "tendencia": tendencia,
             }
         )

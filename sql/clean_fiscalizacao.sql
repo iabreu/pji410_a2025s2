@@ -24,7 +24,7 @@ SELECT
 
     COALESCE(TRY_STRPTIME("Data Limite Resolução", '%d/%m/%Y'), TRY_STRPTIME("Data Limite Resolução", '%m/%d/%Y')) AS "Data Limite Resolução",
 
-    COALESCE("Condição", 'Status Desconhecido') AS "Condição",
+    LOWER(TRIM(COALESCE("Condição", 'desconhecido'))) AS "Condição",
 
     NULLIF("ID CAC", '') AS "ID CAC",
 

@@ -61,7 +61,7 @@ def _engineer_features(
         raise ValueError("Coluna 'Condição' não encontrada no dataset limpo.")
     y = (
         df["Condição"]
-        .fillna("Status Desconhecido")
+        .fillna("desconhecido")
         .apply(lambda s: 1 if str(s).strip().lower() == "vencido" else 0)
     )
 
@@ -125,29 +125,33 @@ def train_and_report(csv_path: str, sql_path: str, db_path: str) -> pd.DataFrame
 
     y_proba_all = pipe.predict_proba(X)[:, 1]
 
-    df_result = df[["Municipio_key", "Municipio"]].copy()
-    df_result["status"] = y
+    required_cols = ["Municipio_key", "Municipio", "Condição"]
+    missing = [c for c in required_cols if c not in df.columns]
+    df_result = df[required_cols].copy()
+    df_result["status_vencido"] = y
     df_result["prob_vencido"] = y_proba_all
 
     agg = (
         df_result.groupby("Municipio_key")
         .agg(
-            total_casos=("status", "count"),
-            casos_vencidos=("status", "sum"),
+            total_casos=("Condição", "count"),
+            casos_vencidos=("status_vencido", "sum"),
+            casos_abertos=("Condição", lambda s: (s == "aberto").sum()),
+            casos_baixados=("Condição", lambda s: (s == "baixado").sum()),
             prob_vencido_media=("prob_vencido", "mean"),
         )
         .reset_index()
     )
 
-    agg["casos_baixados_e_abertos"] = agg["total_casos"] - agg["casos_vencidos"]
     agg["prob_vencido_media"] = agg["prob_vencido_media"].round(4)
     agg["Municipio"] = agg["Municipio_key"].map(lambda k: key_map.get(k, k))
     return agg[
         [
             "Municipio",
             "total_casos",
+            "casos_abertos",
+            "casos_baixados",
             "casos_vencidos",
-            "casos_baixados_e_abertos",
             "prob_vencido_media",
         ]
     ]
@@ -196,6 +200,6 @@ if __name__ == "__main__":
         "csv_file": "fiscalizacao.csv",
         "sql_file": "clean_fiscalizacao.sql",
         "db_file": "fiscalizacao.db",
-        "zip_password": "univesp",
+        "zip_password": "",
     }
     main(event)
